@@ -74,30 +74,102 @@ def get_weather(station):
     return parse_hnc_content(raw_content)
 
 
-def plot_trend(data, variable):
-    # todo: deviation from trend
-    x = data['date'].values.reshape((-1, 1))
-    y = data['value'].values.reshape((-1, 1))
+def linear_regression(x_col, y_col):
+    x = x_col.values.reshape((-1, 1))
+    y = y_col.values.reshape((-1, 1))
 
     regr = LinearRegression().fit(x, y)
-    trend = regr.predict(data['date'].values.astype(float).reshape((-1, 1)))
-    data['trend'] = trend
+    trend = regr.predict(x_col.values.astype(float).reshape((-1, 1)))
+    return trend, regr
+
+
+def plot_trend(data, variable):
+    # todo: deviation from trend
+    data['trend'] = linear_regression(data['date'], data['value'])
 
     ax = data.plot(x='date', y='value', color='tab:blue')
     data.plot(x='date', y='trend', color='tab:orange', ax=ax)
+    # data.plot(x='date', y='rolling', color='tab:grey', ax=ax)
     # data.plot(x='date', y='trend', color='tab:orange')
     ax.set_xlabel('Date')
     ax.set_ylabel(f'{variable} (°F)')
+
+
+def stat(data):
+    data['decade'] = np.floor(data.index.year / 10) * 10
+    data['decade'] = data['decade'].astype(int)
+
+    m = data.groupby('decade')['value'].max()
+    p = data.groupby('decade')['value'].quantile(.96)
+    data['rolling'] = data.value.rolling(window=365 * 5).mean()
+
+    data['year'] = data.set_index('date').index.year
+    data['year'] = data['year'].astype(int)
+    maximum = data.groupby('year')['value'].max()
+    point04 = data.groupby('year')['value'].quantile(.96)
+    ave = data.groupby('year')['value'].mean()
+
+    stats = pd.DataFrame({'max': maximum,
+                          'quant_96': point04,
+                          'ave': ave}).reset_index()
+    stats['max_trend'] = linear_regression(stats['year'], stats['max'])
+    stats['quant_trend'] = linear_regression(stats['year'], stats['quant_96'])
+    stats['ave_trend'] = linear_regression(stats['year'], stats['ave'])
+
+    ax = stats.plot(x='year', y='quant_96', color='tab:blue')
+    # stats.plot(x='year', y='max', color='tab:orange', ax=ax)
+    # stats.plot(x='year', y='ave', color='tab:grey', ax=ax)
+
+    stats.plot(x='year', y='quant_trend', color='tab:blue', linestyle='dotted', ax=ax)
+    # stats.plot(x='year', y='max_trend', color='tab:orange', linestyle='dotted', ax=ax)
+    # stats.plot(x='year', y='ave_trend', color='tab:grey', linestyle='-', ax=ax)
+
+    return m, p
 
 
 if __name__ == '__main__':
     phila = 'USW00013739'
     d = get_weather(phila)
 
-    tmax = d.loc[d['variable'] == 'TMAX']
-    tmin = d.loc[d['variable'] == 'TMIN']
+    tmax = d.loc[d['variable'] == 'TMAX'].copy()
+    tmin = d.loc[d['variable'] == 'TMIN'].copy()
 
-    plot_trend(tmax, 'Daily Max Temp')
+    tmax['year'] = tmax.set_index('date').index.year
+    tmax['year'] = tmax['year'].astype(int)
+    point04 = tmax.groupby('year')['value'].quantile(.96)
+    point04 = point04.reset_index()
+
+    point04['quant_trend'], trend = linear_regression(point04['year'], point04['value'])
+
+    std_dev = point04['value'].std()
+    mu = 0
+    num_years = 30
+
+    noise = np.random.normal(mu, std_dev, num_years)
+    future_years = np.arange(2022, 2052)
+    future_trend = trend.predict(future_years.reshape(-1, 1)).reshape(-1)
+    future = pd.DataFrame({'future_trend': future_trend,
+                           'future_96vals': future_trend + noise},
+                          index=future_years)
+    future.loc[2021, 'future_trend'] = point04['quant_trend'].iloc[-1]
+    future.loc[2021, 'future_96vals'] = point04['value'].iloc[-1]
+    future = future.sort_index()
+
+    plt.figure()
+    plt.plot(point04['year'], point04['value'], label='Actual Annual Values',
+             color='tab:blue')
+    plt.plot(point04['year'], point04['quant_trend'], label='Actual Trend',
+             color='tab:orange')
+
+    plt.plot(future['future_96vals'], color='tab:grey',
+             label='Possible Future Annual Values')
+    plt.plot(future['future_trend'], linestyle='dotted',
+             color='tab:grey', label='Historic Trend Projected')
+    plt.ylabel('Temperature (°F)')
+    plt.title('Annual 96th Percentile Dry Bulb - Philadelphia PA')
+    plt.legend()
+
+    # plot_trend(tmax, 'Daily Max Temp')
     # plot_trend(tmin, 'Daily Min Temp')
 
     # indicator = climate_indicator()
