@@ -11,7 +11,7 @@ weather_data_url = 'https://www1.ncdc.noaa.gov/pub/data/ghcn/daily/by_station/'
 
 
 def generate_noise(base_signal):
-    """ function to add noise of a given probablity to an input signal"""
+    """ function to add noise of a given probability to an input signal"""
     return base_signal
 
 
@@ -85,7 +85,7 @@ def plot_trend(data, variable):
 
     ax = data.plot(x='date', y='value', color='tab:blue')
     data.plot(x='date', y='trend', color='tab:orange', ax=ax)
-    data.plot(x='date', y='trend', color='tab:orange')
+    # data.plot(x='date', y='trend', color='tab:orange')
     ax.set_xlabel('Date')
     ax.set_ylabel(f'{variable} (°F)')
 
@@ -98,7 +98,7 @@ if __name__ == '__main__':
     tmin = d.loc[d['variable'] == 'TMIN']
 
     plot_trend(tmax, 'Daily Max Temp')
-    plot_trend(tmin, 'Daily Min Temp')
+    # plot_trend(tmin, 'Daily Min Temp')
 
     # indicator = climate_indicator()
     # noisy_indicator = generate_noise(indicator)
