@@ -10,24 +10,6 @@ from sklearn.linear_model import LinearRegression
 weather_data_url = 'https://www1.ncdc.noaa.gov/pub/data/ghcn/daily/by_station/'
 
 
-def generate_noise(base_signal):
-    """ function to add noise of a given probability to an input signal"""
-    return base_signal
-
-
-def climate_indicator():
-    """generate the underlying signal for the climate indicator, relatively
-    stable until increase in future"""
-    x = np.arange(0, 1, .01)
-    y = np.tan(x)
-    return x, y
-
-
-def plot_indicator(signal):
-    """plotting functions for climate signal"""
-    plt.plot(signal[0], signal[1])
-
-
 def parse_hnc_content(raw_content):
     columns = ['station', 'date', 'variable', 'value',
                'MFLAG1', 'QFLAG1', 'SFLAG1', 'unknown']
@@ -168,10 +150,3 @@ if __name__ == '__main__':
     plt.ylabel('Temperature (°F)')
     plt.title('Annual 96th Percentile Dry Bulb - Philadelphia PA')
     plt.legend()
-
-    # plot_trend(tmax, 'Daily Max Temp')
-    # plot_trend(tmin, 'Daily Min Temp')
-
-    # indicator = climate_indicator()
-    # noisy_indicator = generate_noise(indicator)
-    # plot_indicator(indicator)
