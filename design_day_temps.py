@@ -111,14 +111,23 @@ def stat(data):
 
 if __name__ == '__main__':
     phila = 'USW00013739'
-    d = get_weather(phila)
+    la = 'USW00023174'
+    nyc = 'USW00013739'
+    chi = 'USW00094846'
+    dallas = 'USW00003927'
+    sea_tac = 'USW00024233'
+    spokane = 'USW00024157'
+    pitt = 'USW00094823'
+    sf = 'USW00023234'
+
+    d = get_weather(sea_tac)
 
     tmax = d.loc[d['variable'] == 'TMAX'].copy()
     tmin = d.loc[d['variable'] == 'TMIN'].copy()
 
     tmax['year'] = tmax.set_index('date').index.year
     tmax['year'] = tmax['year'].astype(int)
-    point04 = tmax.groupby('year')['value'].quantile(.96)
+    point04 = tmax.groupby('year')['value'].quantile(1)
     point04 = point04.reset_index()
 
     point04['quant_trend'], trend = linear_regression(point04['year'], point04['value'])
@@ -148,5 +157,5 @@ if __name__ == '__main__':
     plt.plot(future['future_trend'], linestyle='dotted',
              color='tab:grey', label='Historic Trend Projected')
     plt.ylabel('Temperature (°F)')
-    plt.title('Annual 96th Percentile Dry Bulb - Philadelphia PA')
+    plt.title('Annual Maximum Dry Bulb Temperature - Seattle, WA')
     plt.legend()

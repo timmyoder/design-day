@@ -2,7 +2,7 @@
 
 Proposal for future climatic design conditions based on climate modeling outputs
 
-![](phila.png)
+![](sea.png)
 
 Source for data is [NOAA's Global Historical Climatology Network (GHCN) Daily dataset](https://www.ncei.noaa.gov/products/land-based-station/global-historical-climatology-network-daily)
 
